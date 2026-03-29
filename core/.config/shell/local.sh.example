@@ -1,0 +1,25 @@
+# local.sh — Machine-specific overrides (not tracked by git)
+#
+# Copy this file to local.sh and customize:
+#   cp local.sh.example local.sh
+#
+# This file is sourced at the end of env.sh, so all core
+# environment variables are already available.
+
+# Example: additional PATH entries
+# _prepend_path "$HOME/my-tools/bin"
+
+# Example: override default editor
+# export EDITOR="code --wait"
+
+# Example: work-specific aliases
+# alias vpn='sudo openconnect vpn.company.com'
+# alias staging='ssh deploy@staging.internal'
+
+# Example: proxy settings
+# export http_proxy="http://proxy.company.com:8080"
+# export https_proxy="$http_proxy"
+
+# Example: cloud provider config
+# export AWS_PROFILE="dev"
+# export KUBECONFIG="$HOME/.kube/config-work"

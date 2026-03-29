@@ -13,6 +13,10 @@ else
     alias la='ls -lAh'
 fi
 
+if command -v nvim &>/dev/null; then
+    alias vim='nvim'
+fi
+
 if command -v bat &>/dev/null; then
     alias cat='bat --paging=never'
     alias catp='bat'
