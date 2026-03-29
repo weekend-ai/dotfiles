@@ -1,0 +1,78 @@
+# Starship prompt — engineer information-density config
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$golang\
+$rust\
+$java\
+$kubernetes\
+$cmd_duration\
+$line_break\
+$status\
+$character"""
+
+[character]
+success_symbol = '[❯](bold green)'
+error_symbol = '[❯](bold red)'
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+style = 'bold cyan'
+
+[git_branch]
+format = '[$symbol$branch(:$remote_branch)]($style) '
+style = 'bold purple'
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = 'bold red'
+
+[cmd_duration]
+min_time = 2000
+format = '[took $duration]($style) '
+style = 'bold yellow'
+
+[status]
+disabled = false
+format = '[$status]($style) '
+
+[hostname]
+ssh_only = true
+format = '[$ssh_symbol$hostname]($style) in '
+style = 'bold red'
+ssh_symbol = '🔒 '
+
+[username]
+show_always = false
+format = '[$user]($style)@'
+style_root = 'bold red'
+style_user = 'bold yellow'
+
+[kubernetes]
+disabled = false
+format = '[$symbol$context(/$namespace)]($style) '
+style = 'bold blue'
+
+[nodejs]
+format = '[$symbol($version)]($style) '
+detect_files = ['package.json', '.node-version']
+
+[python]
+format = '[$symbol($version)]($style) '
+detect_files = ['pyproject.toml', '.python-version', 'requirements.txt']
+
+[golang]
+format = '[$symbol($version)]($style) '
+
+[rust]
+format = '[$symbol($version)]($style) '
+
+[java]
+format = '[$symbol($version)]($style) '
