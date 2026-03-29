@@ -28,18 +28,49 @@ install_deps_linux() {
     # Detect package manager
     if command -v apt-get &>/dev/null; then
         sudo apt-get update -qq
-        sudo apt-get install -y -qq stow fzf zoxide ripgrep bat fd-find tmux git-delta
+        sudo apt-get install -y -qq stow fzf ripgrep bat fd-find tmux
     elif command -v dnf &>/dev/null; then
-        sudo dnf install -y stow fzf zoxide ripgrep bat fd-find tmux git-delta
+        sudo dnf install -y stow fzf ripgrep bat fd-find tmux
     elif command -v pacman &>/dev/null; then
         sudo pacman -S --noconfirm stow fzf zoxide ripgrep bat fd tmux git-delta
     else
         warn "Unknown package manager — install stow, fzf, zoxide, ripgrep, bat, fd manually"
     fi
 
-    # eza: not in most distros, install via cargo or binary
+    # zoxide: not in older distro repos, install via official script
+    if ! command -v zoxide &>/dev/null; then
+        info "Installing zoxide..."
+        curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+    fi
+
+    # delta: not in most distro repos, install from GitHub release
+    if ! command -v delta &>/dev/null; then
+        info "Installing git-delta..."
+        local delta_version="0.18.2"
+        local delta_arch
+        delta_arch="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
+        local delta_deb="git-delta_${delta_version}_${delta_arch}.deb"
+        curl -sSfLO "https://github.com/dandavison/delta/releases/download/${delta_version}/${delta_deb}"
+        sudo dpkg -i "$delta_deb"
+        rm -f "$delta_deb"
+    fi
+
+    # eza: not in most distro repos, install from GitHub release
     if ! command -v eza &>/dev/null; then
-        warn "eza not found — install manually: https://github.com/eza-community/eza"
+        info "Installing eza..."
+        local eza_version="0.20.14"
+        local eza_arch
+        case "$(uname -m)" in
+            x86_64)  eza_arch="x86_64-unknown-linux-gnu" ;;
+            aarch64) eza_arch="aarch64-unknown-linux-gnu" ;;
+            *)       warn "Unsupported arch for eza: $(uname -m)"; eza_arch="" ;;
+        esac
+        if [ -n "$eza_arch" ]; then
+            curl -sSfLO "https://github.com/eza-community/eza/releases/download/v${eza_version}/eza_${eza_arch}.tar.gz"
+            tar xzf "eza_${eza_arch}.tar.gz"
+            install -m 755 eza "$HOME/.local/bin/eza"
+            rm -f "eza_${eza_arch}.tar.gz" eza
+        fi
     fi
 
     # starship: official install script
@@ -57,12 +88,18 @@ BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
 backup_if_exists() {
     local file="$1"
-    if [ -e "$HOME/$file" ] && [ ! -L "$HOME/$file" ]; then
-        mkdir -p "$BACKUP_DIR"
-        warn "Backing up existing ~/$file → $BACKUP_DIR/$file"
-        mkdir -p "$BACKUP_DIR/$(dirname "$file")"
-        mv "$HOME/$file" "$BACKUP_DIR/$file"
-    fi
+    local target="$HOME/$file"
+    # Skip if it's already a symlink (previous stow run) or doesn't exist
+    [ -L "$target" ] && return 0
+    [ ! -e "$target" ] && return 0
+    # Skip if the file resolves to inside the dotfiles repo (stow source)
+    local real_path
+    real_path="$(greadlink -f "$target" 2>/dev/null || readlink -f "$target")"
+    [[ "$real_path" == "$DOTFILES_DIR"/* ]] && return 0
+    mkdir -p "$BACKUP_DIR"
+    warn "Backing up existing ~/$file → $BACKUP_DIR/$file"
+    mkdir -p "$BACKUP_DIR/$(dirname "$file")"
+    mv "$target" "$BACKUP_DIR/$file"
 }
 
 # ── Stow: create symlinks ──
@@ -87,24 +124,24 @@ stow_packages() {
     backup_if_exists ".tmux.conf"
 
     # Always stow core, starship, git, tmux
-    stow -v -d "$DOTFILES_DIR" -t "$HOME" core
-    stow -v -d "$DOTFILES_DIR" -t "$HOME" starship
-    stow -v -d "$DOTFILES_DIR" -t "$HOME" git
-    stow -v -d "$DOTFILES_DIR" -t "$HOME" tmux
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" core
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" starship
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" git
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" tmux
 
     # Stow the appropriate shell config
     case "$shell_name" in
         zsh)
-            stow -v -d "$DOTFILES_DIR" -t "$HOME" zsh
+            stow -v -R -d "$DOTFILES_DIR" -t "$HOME" zsh
             ok "Linked: core, starship, zsh"
             ;;
         bash)
-            stow -v -d "$DOTFILES_DIR" -t "$HOME" bash
+            stow -v -R -d "$DOTFILES_DIR" -t "$HOME" bash
             ok "Linked: core, starship, bash"
             ;;
         *)
-            stow -v -d "$DOTFILES_DIR" -t "$HOME" zsh
-            stow -v -d "$DOTFILES_DIR" -t "$HOME" bash
+            stow -v -R -d "$DOTFILES_DIR" -t "$HOME" zsh
+            stow -v -R -d "$DOTFILES_DIR" -t "$HOME" bash
             ok "Linked: core, starship, zsh, bash"
             ;;
     esac

@@ -1,6 +1,7 @@
 # Brewfile — macOS dependencies for dotfiles
 
 # Core tools
+brew "coreutils"
 brew "stow"
 brew "starship"
 brew "fzf"
