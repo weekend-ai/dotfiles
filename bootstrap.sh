@@ -122,12 +122,14 @@ stow_packages() {
     backup_if_exists ".config/git/ignore"
     backup_if_exists ".config/tmux/tmux.conf"
     backup_if_exists ".tmux.conf"
+    backup_if_exists ".config/nvim"
 
     # Always stow core, starship, git, tmux
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" core
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" starship
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" git
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" tmux
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" nvim
 
     # Stow the appropriate shell config
     case "$shell_name" in
