@@ -36,3 +36,6 @@ bindkey '^[[B' history-search-forward
 
 # ── Tool init (must be last — starship overrides prompt) ──
 [ -f "$SHELL_CONFIG_DIR/init.sh" ] && source "$SHELL_CONFIG_DIR/init.sh"
+
+# OpenClaw Completion
+source "/Users/zinuo/.openclaw/completions/openclaw.zsh"

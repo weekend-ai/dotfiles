@@ -4,7 +4,7 @@
 # ── Tool replacements (transparent upgrade with fallback) ──
 
 if command -v eza &>/dev/null; then
-    alias ls='eza'
+    alias ls='eza -a'
     alias ll='eza -l --git --icons'
     alias la='eza -la --git --icons'
     alias tree='eza --tree --icons'
