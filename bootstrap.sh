@@ -28,13 +28,30 @@ install_deps_linux() {
     # Detect package manager
     if command -v apt-get &>/dev/null; then
         sudo apt-get update -qq
-        sudo apt-get install -y -qq stow fzf ripgrep bat fd-find tmux
+        sudo apt-get install -y -qq stow ripgrep bat fd-find tmux curl git
     elif command -v dnf &>/dev/null; then
-        sudo dnf install -y stow fzf ripgrep bat fd-find tmux
+        sudo dnf install -y stow ripgrep bat fd-find tmux curl git
     elif command -v pacman &>/dev/null; then
-        sudo pacman -S --noconfirm stow fzf zoxide ripgrep bat fd tmux git-delta
+        sudo pacman -S --noconfirm stow zoxide ripgrep bat fd tmux git-delta curl git
     else
         warn "Unknown package manager — install stow, fzf, zoxide, ripgrep, bat, fd manually"
+    fi
+
+    # fzf: install from git for latest version (distro repos are often outdated)
+    if [ ! -d "$HOME/.fzf" ]; then
+        info "Installing fzf (latest) from git..."
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+        "$HOME/.fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-zsh
+    fi
+
+    # neovim: install from GitHub release (distro repos are often outdated)
+    if ! command -v nvim &>/dev/null; then
+        info "Installing Neovim..."
+        local nvim_version="0.10.4"
+        curl -sSfLO "https://github.com/neovim/neovim/releases/download/v${nvim_version}/nvim-linux-x86_64.tar.gz"
+        sudo tar xzf nvim-linux-x86_64.tar.gz -C /opt
+        sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+        rm -f nvim-linux-x86_64.tar.gz
     fi
 
     # zoxide: not in older distro repos, install via official script
@@ -77,6 +94,12 @@ install_deps_linux() {
     if ! command -v starship &>/dev/null; then
         info "Installing Starship..."
         curl -sS https://starship.rs/install.sh | sh -s -- -y
+    fi
+
+    # asdf: version manager
+    if [ ! -d "$HOME/.asdf" ]; then
+        info "Installing asdf..."
+        git clone https://github.com/asdf-vm/asdf.git "$HOME/.asdf" --branch v0.15.0
     fi
 
     ok "Linux packages installed"
@@ -123,13 +146,15 @@ stow_packages() {
     backup_if_exists ".config/tmux/tmux.conf"
     backup_if_exists ".tmux.conf"
     backup_if_exists ".config/nvim"
+    backup_if_exists ".tool-versions"
 
-    # Always stow core, starship, git, tmux
+    # Always stow core, starship, git, tmux, nvim, asdf
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" core
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" starship
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" git
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" tmux
     stow -v -R -d "$DOTFILES_DIR" -t "$HOME" nvim
+    stow -v -R -d "$DOTFILES_DIR" -t "$HOME" asdf
 
     # Stow the appropriate shell config
     case "$shell_name" in
@@ -151,6 +176,39 @@ stow_packages() {
     if [ -d "$BACKUP_DIR" ]; then
         warn "Your original configs were backed up to: $BACKUP_DIR"
     fi
+}
+
+# ── asdf: install plugins and versions from .tool-versions ──
+
+setup_asdf() {
+    if [ ! -d "$HOME/.asdf" ]; then
+        warn "asdf not installed, skipping version setup"
+        return
+    fi
+
+    # shellcheck disable=SC1091
+    . "$HOME/.asdf/asdf.sh"
+
+    local tool_versions="$HOME/.tool-versions"
+    [ -f "$tool_versions" ] || return 0
+
+    info "Installing asdf plugins and tool versions..."
+    while IFS=' ' read -r plugin _version; do
+        [ -z "$plugin" ] && continue
+        [[ "$plugin" == \#* ]] && continue
+        if ! asdf plugin list 2>/dev/null | grep -q "^${plugin}$"; then
+            asdf plugin add "$plugin"
+        fi
+    done < "$tool_versions"
+
+    # Snap-installed aria2c is sandboxed and breaks node-build downloads;
+    # hide it so node-build falls back to curl/wget
+    local install_path="$PATH"
+    if snap list aria2 &>/dev/null 2>&1; then
+        install_path=$(echo "$PATH" | tr ':' '\n' | grep -v snap | tr '\n' ':' | sed 's/:$//')
+    fi
+    PATH="$install_path" asdf install
+    ok "asdf tools installed"
 }
 
 # ── Create required directories ──
@@ -175,6 +233,7 @@ main() {
 
     setup_dirs
     stow_packages
+    setup_asdf
 
     echo ""
     ok "Done! Restart your shell or run: exec \$SHELL -l"

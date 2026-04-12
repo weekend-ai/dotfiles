@@ -1,18 +1,21 @@
--- Bootstrap lazy.nvim
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git", "clone", "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",
-    lazypath,
-  })
+-- LazyVim requires Neovim > 0.11.2
+if vim.fn.has("nvim-0.11.3") == 1 then
+  -- Bootstrap lazy.nvim
+  local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+  if not vim.loop.fs_stat(lazypath) then
+    vim.fn.system({
+      "git", "clone", "--filter=blob:none",
+      "https://github.com/folke/lazy.nvim.git",
+      "--branch=stable",
+      lazypath,
+    })
+  end
+  vim.opt.rtp:prepend(lazypath)
+
+  -- Disable netrw before anything loads (replaced by snacks explorer)
+  vim.g.loaded_netrw = 1
+  vim.g.loaded_netrwPlugin = 1
+
+  -- Load LazyVim
+  require("config.lazy")
 end
-vim.opt.rtp:prepend(lazypath)
-
--- Disable netrw before anything loads (replaced by snacks explorer)
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
-
--- Load LazyVim
-require("config.lazy")

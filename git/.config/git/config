@@ -54,3 +54,6 @@
     ri = rebase -i
     wip = "!git add -A && git commit -m 'wip: work in progress'"
     undo = reset --soft HEAD~1
+[user]
+	email = ai.revitalize@gmail.com
+	name = weekend-ai

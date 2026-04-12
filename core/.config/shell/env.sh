@@ -47,6 +47,11 @@ fi
 # Common paths
 _prepend_path "$HOME/.local/bin"
 
+# fzf (git install)
+if [ -d "$HOME/.fzf/bin" ]; then
+    _prepend_path "$HOME/.fzf/bin"
+fi
+
 # Go
 if [ -d "$HOME/go/bin" ]; then
     export GOPATH="${GOPATH:-$HOME/go}"

@@ -11,7 +11,25 @@ fi
 
 # ── fzf ──
 if command -v fzf &>/dev/null; then
-    eval "$(fzf --"$CURRENT_SHELL")"
+    # fzf 0.48+ supports `fzf --bash`/`fzf --zsh`; older versions need sourced scripts
+    if fzf --"$CURRENT_SHELL" &>/dev/null 2>&1; then
+        eval "$(fzf --"$CURRENT_SHELL")"
+    else
+        # Fallback: source distro-provided key-bindings
+        for _fzf_script in \
+            "/usr/share/fzf/key-bindings.${CURRENT_SHELL}" \
+            "/usr/share/doc/fzf/examples/key-bindings.${CURRENT_SHELL}" \
+            "/usr/share/fzf/shell/key-bindings.${CURRENT_SHELL}"; do
+            [ -f "$_fzf_script" ] && . "$_fzf_script" && break
+        done
+        for _fzf_script in \
+            "/usr/share/fzf/completion.${CURRENT_SHELL}" \
+            "/usr/share/doc/fzf/examples/completion.${CURRENT_SHELL}" \
+            "/usr/share/fzf/shell/completion.${CURRENT_SHELL}"; do
+            [ -f "$_fzf_script" ] && . "$_fzf_script" && break
+        done
+        unset _fzf_script
+    fi
 
     # Default options
     export FZF_DEFAULT_OPTS="\
