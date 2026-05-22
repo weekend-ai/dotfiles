@@ -4,7 +4,7 @@
 # ── Tool replacements (transparent upgrade with fallback) ──
 
 if command -v eza &>/dev/null; then
-    alias ls='eza -a'
+    alias ls='eza'
     alias ll='eza -l --git --icons'
     alias la='eza -la --git --icons'
     alias tree='eza --tree --icons'
@@ -51,6 +51,7 @@ mkcd() {
 alias c='clear'
 alias e='$EDITOR'
 alias reload='exec $SHELL -l'
+alias k='kubectl'
 
 # ── Git shortcuts ──
 

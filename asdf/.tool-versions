@@ -1,2 +1,4 @@
 nodejs 25.9.0
 neovim 0.12.1
+kubectl 1.34.1
+kubectx 0.11.0
